@@ -9,10 +9,30 @@ def runner_1(socket):
     Recieves packets from the server, and then displays those results
     on screen
     '''
+    buffer = b''
     while True:
+
+        if len(buffer) > 2:
+
+            packet_len = int.from_bytes(buffer[:2], byteorder="big") + 2
+
+            if packet_len <= len(buffer):
+
+                packet_data = buffer[:packet_len]
+                buffer = buffer[packet_len: ]
+
+
+                print_message(packet_data)
+
+        
         data = socket.recv(4096)
-        print_message("FROM HERE")
         print_message(data.decode())
+
+        if len(data) == 0:
+            print_message("No connection")
+
+        buffer += data
+
 
 def runner_2():
     '''

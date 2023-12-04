@@ -64,6 +64,14 @@ def print_socket_results(ready_to_be_read, list_s, read_set):
                 msg_len = len(data)
                 print("({}, {}) {} bytes: {}".format(host, port, msg_len, data))
 
+                for sock in read_set:
+                    if sock != list_s:
+                        print("DATA")
+                        print(data.decode())
+                        print("END DATA")
+                        sock.send(data)
+
+
 def while_select(read_set, list_s):
     '''
     Looping through and selecting connections that are ready,
