@@ -34,6 +34,7 @@ def print_socket_results(ready_to_be_read, list_s, read_set):
     and non-listening sockets will print the messages that they
     recieve.
     '''
+    conn = None
     for s in ready_to_be_read:
         
         # If the current connection is a listening socket
@@ -63,9 +64,8 @@ def print_socket_results(ready_to_be_read, list_s, read_set):
                 host, port = s.getpeername()
                 msg_len = len(data)
                 print("({}, {}) {} bytes: {}".format(host, port, msg_len, data))
-
                 for sock in read_set:
-                    if sock != list_s:
+                    if sock != list_s and sock != conn:
                         print("DATA")
                         print(data.decode())
                         print("END DATA")

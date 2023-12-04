@@ -30,6 +30,7 @@ def runner_1(socket):
 
         if len(data) == 0:
             print_message("No connection")
+            break
 
         buffer += data
 
