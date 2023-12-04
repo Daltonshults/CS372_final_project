@@ -1,5 +1,6 @@
 import socket
 import sys
+import json
 from chatuicurses import init_windows, read_command, print_message, end_windows
 
 def runner_1():
@@ -12,12 +13,12 @@ def runner_2():
     ...
 
 def usage():
-    print("usage: select_client.py prefix host port", file=sys.stderr)
+    print("usage: select_client.py name host port", file=sys.stderr)
 
 def main(argv):
 
     try:
-        prefix = argv[1]
+        name = argv[1]
         host = argv[2]
         port = int(argv[3])
     except:
@@ -28,6 +29,17 @@ def main(argv):
 
     s = socket.socket()
     s.connect((host, port))
+
+    # Create connection JSON and send it
+    hello = {
+        "type": "hello",
+        "nick": name
+    }
+
+    hello_str = json.dumps(hello)
+    hello_str_bytes = hello_str.encode()
+    s.send(hello_str_bytes)
+
 
     while True:
         try:
