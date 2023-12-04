@@ -1,6 +1,7 @@
 import socket
 import sys
 import json
+import threading
 from chatuicurses import init_windows, read_command, print_message, end_windows
 
 def runner_1(socket):
@@ -8,7 +9,10 @@ def runner_1(socket):
     Recieves packets from the server, and then displays those results
     on screen
     '''
-    ...
+    while True:
+        data = socket.recv(4096)
+        print_message("FROM HERE")
+        print_message(data.decode())
 
 def runner_2():
     '''
@@ -57,23 +61,17 @@ def main(argv):
 
     s = socket.socket()
     s.connect((host, port))
-
-    # Create connection JSON and send it
-    # hello = {
-    #     "type": "hello",
-    #     "nick": name
-    # }
-
-    # hello_str = json.dumps(hello)
-    # hello_str_bytes = hello_str.encode()
     s.send(create_hello_string(name))
 
+    t1 = threading.Thread(target=runner_1,
+                          daemon=True,
+                          args=(s,))
+    t1.start()
 
     while True:
         try:
             command = read_command("Enter a thing> ")
             command_bytes = create_message_string(command)
-            #print_message(command_bytes)
             s.send(command_bytes)
         except:
             break
