@@ -3,36 +3,45 @@ import sys
 import json
 import threading
 from chatuicurses import init_windows, read_command, print_message, end_windows
+packet_buffer = b''
+
 
 def runner_1(socket):
     '''
     Recieves packets from the server, and then displays those results
     on screen
     '''
-    buffer = b''
+    global packet_buffer
     while True:
+        #print(len(packet_buffer))
+        if len(packet_buffer) > 2:
 
-        if len(buffer) > 2:
+            packet_len = int.from_bytes(packet_buffer[:2], byteorder="big")
+            #print_message("PACKET BUFFER: " + str(len(packet_buffer)))
+            #print_message("PACKET LEN: " + str(packet_len))
+            if packet_len <= len(packet_buffer):
 
-            packet_len = int.from_bytes(buffer[:2], byteorder="big") + 2
-
-            if packet_len <= len(buffer):
-
-                packet_data = buffer[:packet_len]
-                buffer = buffer[packet_len: ]
+                packet_data = packet_buffer[2:packet_len]
+                packet_buffer = packet_buffer[packet_len: ]
 
 
-                print_message(packet_data)
+                json_str = packet_data.decode()
+                print_message("THIS IS THE JSON: " + json_str)
+                print_message("THIS IS THE PACKET DATA " + str(packet_data))
+                json_packet = json.loads(json_str)
+
+                print_message("JSON PACKET: " + str(json_packet))
+                print_message(json_packet["type"])
+                #packet_buffer = b''
 
         
         data = socket.recv(4096)
-        print_message(data.decode())
 
         if len(data) == 0:
             print_message("No connection")
             break
 
-        buffer += data
+        packet_buffer += data
 
 
 def runner_2():

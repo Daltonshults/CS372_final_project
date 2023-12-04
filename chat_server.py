@@ -45,6 +45,7 @@ def print_socket_results(ready_to_be_read, list_s, read_set):
             host, port = conn.getpeername()
 
             print("({}, {}): connected".format(host, port))
+            # SEND CONNECTION TO CLIENTS
                 
         else:
 
@@ -65,11 +66,16 @@ def print_socket_results(ready_to_be_read, list_s, read_set):
                 msg_len = len(data)
                 print("({}, {}) {} bytes: {}".format(host, port, msg_len, data))
                 for sock in read_set:
-                    if sock != list_s and sock != conn:
+                    if sock != list_s:
                         print("DATA")
                         print(data.decode())
                         print("END DATA")
-                        sock.send(data)
+                        print(type(data))
+                        print(len(data))
+                        length = len(data) + 2
+                        length_bytes = length.to_bytes(2, byteorder="big")
+                        packet_with_length = length_bytes + data
+                        sock.send(packet_with_length)
 
 
 def while_select(read_set, list_s):
