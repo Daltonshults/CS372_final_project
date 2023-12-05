@@ -125,8 +125,9 @@ def while_select(read_set, list_s):
                     length = len(leave_bytes)
                     leave_length_bytes = length.to_bytes(2, byteorder="big")
                     packet_with_length = leave_length_bytes + leave_bytes
-
-                    sock.send(packet_with_length)
+                    for sock in read_set:
+                        if sock != list_s:
+                            sock.send(packet_with_length)
 
                     # SEND END OF CONNECTION TO CLIENTS
                 buffers[s] += data
@@ -177,6 +178,7 @@ def while_select(read_set, list_s):
                                 packet_with_length = length_bytes +  bytes_join
 
                                 sock.send(packet_with_length)
+                                buffers[s] = b''
 
                             if json_str["type"] == "chat":
                                 new_json = dict()
@@ -197,6 +199,7 @@ def while_select(read_set, list_s):
 
 
                                 sock.send(packet_with_length)
+                                buffers[s] = b''
 
                             # sock.send(packet_with_length)
                             # buffers[s] = b''
