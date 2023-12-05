@@ -14,12 +14,10 @@ def runner_1(socket):
     global packet_buffer
     global nick
     while True:
-        # print_message(str(packet_buffer))
-        # print_message("LENGTH BUFFER: " + str(len(packet_buffer)))
         if len(packet_buffer) > 2:
 
             packet_len = int.from_bytes(packet_buffer[:2], byteorder="big") + 2
-            # print_message("This is the packet length " + str(packet_len))
+
             if packet_len <= len(packet_buffer):
 
                 packet_data = packet_buffer[2:packet_len]
@@ -27,12 +25,7 @@ def runner_1(socket):
 
 
                 json_str = packet_data.decode()
-                # print_message("THIS IS THE JSON: " + json_str)
-                # print_message("THIS IS THE PACKET DATA " + str(packet_data))
                 json_packet = json.loads(json_str)
-
-                # print_message("JSON PACKET: " + str(json_packet))
-                # print_message(json_packet["type"])
 
                 if json_packet["type"] == "chat" and json_packet["nick"] != nick:
                     print_message(f"{json_packet['nick']}: {json_packet['message']}")
@@ -114,7 +107,7 @@ def main(argv):
         try:
             command = read_command(f"{nick}> ")
             command_bytes = create_message_string(command)
-            print_message(str(command_bytes))
+
             if command[0] == '/' and command[1] == 'q':
                 sys.exit(0)
             
