@@ -112,8 +112,12 @@ def main(argv):
 
     while True:
         try:
-            command = read_command("Enter a thing> ")
+            command = read_command(f"{nick}> ")
             command_bytes = create_message_string(command)
+            print_message(str(command_bytes))
+            if command[0] == '/' and command[1] == 'q':
+                sys.exit(0)
+            
             command_len = len(command_bytes)
             byte_len = command_len.to_bytes(2, byteorder="big")
             command_with_length = byte_len + command_bytes
@@ -121,7 +125,7 @@ def main(argv):
         except:
             break
 
-        print_message(f">>> {command}")
+        print_message(f"{nick}: {command}")
     
     end_windows()
 
