@@ -115,6 +115,11 @@ def check_msg_type(json_str, names, buffers, sock, s):
 def initialize_names_buffers():
     return dict(), dict()
 
+def add_to_read_set(s, buffers, read_set):
+    conn, _ = s.accept()
+    buffers[conn] = b''
+    read_set.add(conn)
+
 def while_select(read_set, list_s):
     '''
     Looping through and selecting connections that are ready,
@@ -132,9 +137,12 @@ def while_select(read_set, list_s):
             
             # If the current connection is a listening socket
             if s == list_s:
-                conn, _ = s.accept()
-                buffers[conn] = b''
-                read_set.add(conn)
+                # conn, _ = s.accept()
+                # buffers[conn] = b''
+                # read_set.add(conn)
+                add_to_read_set(s,
+                                buffers,
+                                read_set)
                    
             else:
 
@@ -159,8 +167,11 @@ def while_select(read_set, list_s):
                     length = len(leave_bytes)
                     leave_length_bytes = length.to_bytes(2, byteorder="big")
                     packet_with_length = leave_length_bytes + leave_bytes
+
                     for sock in read_set:
+
                         if sock != list_s:
+
                             sock.send(packet_with_length)
 
                     # SEND END OF CONNECTION TO CLIENTS
@@ -194,43 +205,7 @@ def while_select(read_set, list_s):
                                            buffers,
                                            sock,
                                            s)
-                            # if json_str['type'] == 'hello':
-                            #     names[s] = json_str['nick']
-                            #     join = {
-                            #         "type" : "join",
-                            #         "nick" : names[s],
-                            #      }
-                                
-                            #     join_str = json.dumps(join)
-                            #     bytes_join = join_str.encode()
-                            #     length = len(bytes_join)
 
-                            #     length_bytes = length.to_bytes(2, byteorder="big")
-                            #     packet_with_length = length_bytes +  bytes_join
-
-                            #     sock.send(packet_with_length)
-                            #     buffers[s] = b''
-
-                            # if json_str["type"] == "chat":
-                            #     new_json = dict()
-                            #     json_str["nick"] = names[s]
-                            #     new_json['type'] = json_str['type']
-                            #     new_json['nick'] = names[s]
-                            #     new_json["message"] = json_str["message"]
-
-                            #     strings_json = json.dumps(new_json)
-
-                            #     bytes_json = strings_json.encode()
-                            #     length = len(strings_json)
-                            #     length_bytes = length.to_bytes(2, byteorder="big")
-                            #     packet_with_length = length_bytes + bytes_json
-
-
-                                # sock.send(packet_with_length)
-                                # buffers[s] = b''
-
-                            # sock.send(packet_with_length)
-                            # buffers[s] = b''
 
 def run_server(port):
 
