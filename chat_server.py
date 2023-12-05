@@ -133,6 +133,10 @@ def send_packets(sock, read_set, list_s, packet_with_length):
     for sock in read_set:
         if sock != list_s:
             sock.send(packet_with_length)
+
+def buffer_contain_length(buffer, packet_len):
+    return packet_len <= len(buffer)
+
 def while_select(read_set, list_s):
     '''
     Looping through and selecting connections that are ready,
@@ -175,25 +179,21 @@ def while_select(read_set, list_s):
 
                     packet_with_length = create_packet(leave_bytes)
 
-                    # for sock in read_set:
-                    #     if sock != list_s:
-                    #         sock.send(packet_with_length)
                     send_packets(sock,
                                  read_set,
                                  list_s,
                                  packet_with_length)
 
-                    # SEND END OF CONNECTION TO CLIENTS
+
                 buffers[s] += data
 
 
                 if (len(buffers[s]) > 2):
-                    # The message is from a non-closed connection. Print it. 
 
                     packet_len = int.from_bytes(buffers[s][:2], byteorder="big") + 2
 
 
-                    if packet_len <= len(buffers[s]):
+                    if buffer_contain_length(buffers[s], packet_len):
                         packet_data = buffers[s][2:packet_len]
 
                         buffers[s]  =  b''
