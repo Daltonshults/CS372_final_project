@@ -93,23 +93,20 @@ def buffer_contains_length(buffer):
     return len(buffer) > 2
 
 def respond_to_clients(buffers, list_s, read_set, names, s):
-    if buffer_contains_length(buffers[s]):
-
-        packet_len = int.from_bytes(buffers[s][:2], byteorder="big") + 2
+    packet_len = int.from_bytes(buffers[s][:2], byteorder="big") + 2
 
 
-        if packet_len_greater_equal_buffer(buffers[s], packet_len):
-            packet_data = buffers[s][2:packet_len]
+    if packet_len_greater_equal_buffer(buffers[s], packet_len):
+        packet_data = buffers[s][2:packet_len]
 
-            buffers[s]  =  b''
-        for sock in read_set:
+        buffers[s]  =  b''
+    for sock in read_set:
 
-            if sock != list_s:
-                #_ = create_packet(packet_data)
+        if sock != list_s:
 
-                json_str = json.loads(packet_data)
+            json_str = json.loads(packet_data)
 
-                check_msg_type(json_str,
+            check_msg_type(json_str,
                                names,
                                buffers,
                                sock,
@@ -172,13 +169,14 @@ def while_select(read_set, list_s):
                                  list_s,
                                  packet_with_length)
 
-
                 buffers[s] += data
-                respond_to_clients(buffers,
-                                   list_s,
-                                   read_set,
-                                   names,
-                                   s)
+                if buffer_contains_length(buffers[s]):
+
+                    respond_to_clients(buffers,
+                                        list_s,
+                                        read_set,
+                                        names,
+                                        s)
 
 
 def run_server(port):
