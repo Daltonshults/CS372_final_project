@@ -147,9 +147,9 @@ def respond_to_clients(buffers, list_s, read_set, names, s):
 
 
         if packet_len_greater_equal_buffer(buffers[s], packet_len):
-                        packet_data = buffers[s][2:packet_len]
+            packet_data = buffers[s][2:packet_len]
 
-                        buffers[s]  =  b''
+            buffers[s]  =  b''
         for sock in read_set:
 
             if sock != list_s:
@@ -158,10 +158,33 @@ def respond_to_clients(buffers, list_s, read_set, names, s):
                 json_str = json.loads(packet_data)
 
                 check_msg_type(json_str,
-                                           names,
-                                           buffers,
-                                           sock,
-                                           s)
+                               names,
+                               buffers,
+                               sock,
+                                s)
+                
+def client_left(data, names, read_set, s):
+    if data_empty(data):
+                 
+        # Remove closed connections from read_set
+        read_set.remove(s)
+
+        leave = {
+            "type": "leave",
+            "nick": names[s],
+        }
+
+        names.pop(s)
+
+        leave_str = json.dumps(leave)
+
+        leave_bytes = leave_str.encode()
+
+        packet_with_length = create_packet(leave_bytes)
+
+        return packet_with_length
+
+
 def while_select(read_set, list_s):
     '''
     Looping through and selecting connections that are ready,
@@ -188,21 +211,25 @@ def while_select(read_set, list_s):
                 # If the data is recieved without length the connection has been closed
                 if data_empty(data):
                  
-                    # Remove closed connections from read_set
-                    read_set.remove(s)
+                    # # Remove closed connections from read_set
+                    # read_set.remove(s)
 
-                    leave = {
-                        "type": "leave",
-                        "nick": names[s],
-                    }
+                    # leave = {
+                    #     "type": "leave",
+                    #     "nick": names[s],
+                    # }
 
-                    names.pop(s)
+                    # names.pop(s)
 
-                    leave_str = json.dumps(leave)
+                    # leave_str = json.dumps(leave)
 
-                    leave_bytes = leave_str.encode()
+                    # leave_bytes = leave_str.encode()
 
-                    packet_with_length = create_packet(leave_bytes)
+                    # packet_with_length = create_packet(leave_bytes)
+                    packet_with_length = client_left(data,
+                                                     names,
+                                                     read_set,
+                                                     s)
 
                     send_packets(read_set,
                                  list_s,
@@ -215,27 +242,6 @@ def while_select(read_set, list_s):
                                    read_set,
                                    names,
                                    s)
-                # if buffer_contains_length(buffers[s]):
-
-                #     packet_len = int.from_bytes(buffers[s][:2], byteorder="big") + 2
-
-
-                #     if packet_len_greater_equal_buffer(buffers[s], packet_len):
-                #         packet_data = buffers[s][2:packet_len]
-
-                #         buffers[s]  =  b''
-                #     for sock in read_set:
-
-                #         if sock != list_s:
-                #             packet_with_length = create_packet(packet_data)
-
-                #             json_str = json.loads(packet_data)
-
-                #             check_msg_type(json_str,
-                #                            names,
-                #                            buffers,
-                #                            sock,
-                #                            s)
 
 
 def run_server(port):
