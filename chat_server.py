@@ -129,14 +129,15 @@ def create_packet(msg):
 
     return length_bytes + msg
 
+def send_packets(sock, read_set, list_s, packet_with_length):
+    for sock in read_set:
+        if sock != list_s:
+            sock.send(packet_with_length)
 def while_select(read_set, list_s):
     '''
     Looping through and selecting connections that are ready,
     and passes them to the print socket results.
     '''
-    # names = dict()
-    # buffers = dict()
-
     names, buffers = initialize_names_buffers()
     packet_data = b''
     while True:
@@ -172,15 +173,15 @@ def while_select(read_set, list_s):
 
                     leave_bytes = leave_str.encode()
 
-                    # length = len(leave_bytes)
-                    # leave_length_bytes = length.to_bytes(2, byteorder="big")
-                    # packet_with_length = leave_length_bytes + leave_bytes
                     packet_with_length = create_packet(leave_bytes)
-                    for sock in read_set:
 
-                        if sock != list_s:
-
-                            sock.send(packet_with_length)
+                    # for sock in read_set:
+                    #     if sock != list_s:
+                    #         sock.send(packet_with_length)
+                    send_packets(sock,
+                                 read_set,
+                                 list_s,
+                                 packet_with_length)
 
                     # SEND END OF CONNECTION TO CLIENTS
                 buffers[s] += data
@@ -188,9 +189,6 @@ def while_select(read_set, list_s):
 
                 if (len(buffers[s]) > 2):
                     # The message is from a non-closed connection. Print it. 
-                    host, port = s.getpeername()
-                    msg_len = len(buffers[s])
-
 
                     packet_len = int.from_bytes(buffers[s][:2], byteorder="big") + 2
 
@@ -202,11 +200,6 @@ def while_select(read_set, list_s):
                     for sock in read_set:
 
                         if sock != list_s:
-                            
-                            # length = len(packet_data)
-                            # length_bytes = length.to_bytes(2, byteorder="big")
-                            # packet_with_length = length_bytes + packet_data
-
                             packet_with_length = create_packet(packet_data)
 
                             json_str = json.loads(packet_data)
