@@ -95,9 +95,6 @@ def while_select(read_set, list_s):
                 buffers[conn] = b''
                 read_set.add(conn)
                 host, port = conn.getpeername()
-
-                print("({}, {}): connected".format(host, port))
-                # SEND CONNECTION TO CLIENTS
                     
             else:
 
@@ -107,7 +104,6 @@ def while_select(read_set, list_s):
                 if len(data) == 0:
                     host, port = s.getpeername()
                         
-                    print("({}, {}): disconnected".format(host, port))
                     
                     # Remove closed connections from read_set
                     read_set.remove(s)
@@ -132,25 +128,20 @@ def while_select(read_set, list_s):
                     # SEND END OF CONNECTION TO CLIENTS
                 buffers[s] += data
 
-                print(f'length of buffer s {len(buffers[s])}')
 
                 if (len(buffers[s]) > 2):
                     # The message is from a non-closed connection. Print it. 
                     host, port = s.getpeername()
                     msg_len = len(buffers[s])
-                    print(f"BUFFERS {buffers[s]}")
-                    
-                    #print("({}, {}) {} bytes: {}".format(host, port, msg_len, data))
+
 
                     packet_len = int.from_bytes(buffers[s][:2], byteorder="big") + 2
 
-                    print(f"packet len {packet_len}")
+
                     if packet_len <= len(buffers[s]):
                         packet_data = buffers[s][2:packet_len]
-                        print("RESET BUFFER")
-                        buffers[s]  =  b''
 
-                        print("PACKET DATA :" + str(packet_data))
+                        buffers[s]  =  b''
                     for sock in read_set:
 
                         if sock != list_s:
@@ -159,9 +150,6 @@ def while_select(read_set, list_s):
                             length_bytes = length.to_bytes(2, byteorder="big")
                             packet_with_length = length_bytes + packet_data
                             json_str = json.loads(packet_data)
-
-                            print(f"JSON STRING {json_str['type']}")
-                            print(f"SEND THE STUPID FUCKING SHIT: {packet_with_length}")
 
                             if json_str['type'] == 'hello':
                                 names[s] = json_str['nick']
@@ -173,7 +161,7 @@ def while_select(read_set, list_s):
                                 join_str = json.dumps(join)
                                 bytes_join = join_str.encode()
                                 length = len(bytes_join)
-                                print(f"LENGTH {length}")
+
                                 length_bytes = length.to_bytes(2, byteorder="big")
                                 packet_with_length = length_bytes +  bytes_join
 
@@ -189,9 +177,6 @@ def while_select(read_set, list_s):
 
                                 strings_json = json.dumps(new_json)
 
-                                print(f"STRINGS_JSON: {strings_json}")
-
-                                print(f"NAME S: {names[s]}")
                                 bytes_json = strings_json.encode()
                                 length = len(strings_json)
                                 length_bytes = length.to_bytes(2, byteorder="big")
