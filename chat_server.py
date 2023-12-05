@@ -120,6 +120,15 @@ def add_to_read_set(s, buffers, read_set):
     buffers[conn] = b''
     read_set.add(conn)
 
+def data_empty(data):
+    return len(data) == 0
+
+def create_packet(msg):
+    length = len(msg)
+    length_bytes = length.to_bytes(2, byteorder="big")
+
+    return length_bytes + msg
+
 def while_select(read_set, list_s):
     '''
     Looping through and selecting connections that are ready,
@@ -137,9 +146,7 @@ def while_select(read_set, list_s):
             
             # If the current connection is a listening socket
             if s == list_s:
-                # conn, _ = s.accept()
-                # buffers[conn] = b''
-                # read_set.add(conn)
+
                 add_to_read_set(s,
                                 buffers,
                                 read_set)
@@ -149,7 +156,7 @@ def while_select(read_set, list_s):
                 data = s.recv(4096)
 
                 # If the data is recieved without length the connection has been closed
-                if len(data) == 0:
+                if data_empty(data):
                  
                     # Remove closed connections from read_set
                     read_set.remove(s)
@@ -164,10 +171,11 @@ def while_select(read_set, list_s):
                     leave_str = json.dumps(leave)
 
                     leave_bytes = leave_str.encode()
-                    length = len(leave_bytes)
-                    leave_length_bytes = length.to_bytes(2, byteorder="big")
-                    packet_with_length = leave_length_bytes + leave_bytes
 
+                    # length = len(leave_bytes)
+                    # leave_length_bytes = length.to_bytes(2, byteorder="big")
+                    # packet_with_length = leave_length_bytes + leave_bytes
+                    packet_with_length = create_packet(leave_bytes)
                     for sock in read_set:
 
                         if sock != list_s:
@@ -195,9 +203,12 @@ def while_select(read_set, list_s):
 
                         if sock != list_s:
                             
-                            length = len(packet_data)
-                            length_bytes = length.to_bytes(2, byteorder="big")
-                            packet_with_length = length_bytes + packet_data
+                            # length = len(packet_data)
+                            # length_bytes = length.to_bytes(2, byteorder="big")
+                            # packet_with_length = length_bytes + packet_data
+
+                            packet_with_length = create_packet(packet_data)
+
                             json_str = json.loads(packet_data)
 
                             check_msg_type(json_str,
