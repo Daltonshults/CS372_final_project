@@ -105,7 +105,7 @@ def respond_to_clients(buffers, list_s, read_set, names, s):
         for sock in read_set:
 
             if sock != list_s:
-                _ = create_packet(packet_data)
+                #_ = create_packet(packet_data)
 
                 json_str = json.loads(packet_data)
 
