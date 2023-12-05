@@ -5,6 +5,27 @@ import threading
 from chatuicurses import init_windows, read_command, print_message, end_windows
 packet_buffer = b''
 nick = ""
+def select_response_type(json_packet):
+    if json_packet["type"] == "chat" and json_packet["nick"] != nick:
+                    print_message(f"{json_packet['nick']}: {json_packet['message']}")
+
+    if json_packet["type"] == "join" and json_packet["nick"] != nick:
+        print_message(f"*** {json_packet['nick']} has joined the chat")
+
+    if json_packet["type"] == "leave" and json_packet["nick"] != nick:
+        print_message(f"*** {json_packet['nick']} has left the chat")
+
+def extract_packet_buffer(packet_buffer, packet_len):
+     return packet_buffer[2:packet_len], packet_buffer[packet_len: ]
+
+def get_json_packet(packet_data):
+
+    json_str = packet_data.decode()
+    return json.loads(json_str)
+
+def data_empty(data):
+     if len(data) == 0:
+          return True
 
 def runner_1(socket):
     '''
@@ -20,25 +41,15 @@ def runner_1(socket):
 
             if packet_len <= len(packet_buffer):
 
-                packet_data = packet_buffer[2:packet_len]
-                packet_buffer = packet_buffer[packet_len: ]
+                packet_data, packet_buffer = extract_packet_buffer(packet_buffer, packet_len)
 
+                json_packet = get_json_packet(packet_data)
 
-                json_str = packet_data.decode()
-                json_packet = json.loads(json_str)
-
-                if json_packet["type"] == "chat" and json_packet["nick"] != nick:
-                    print_message(f"{json_packet['nick']}: {json_packet['message']}")
-
-                if json_packet["type"] == "join" and json_packet["nick"] != nick:
-                    print_message(f"*** {json_packet['nick']} has joined the chat")
-
-                if json_packet["type"] == "leave" and json_packet["nick"] != nick:
-                    print_message(f"*** {json_packet['nick']} has left the chat")
+                select_response_type(json_packet)
         
         data = socket.recv(4096)
 
-        if len(data) == 0:
+        if data_empty(data):
             print_message("No connection")
             break
 
@@ -73,6 +84,13 @@ def create_message_string(command):
 
     return message_str.encode()
 
+def create_message(msg):
+    length = len(msg)
+    bytes_lengths = length.to_bytes(2, byteorder="big")
+    return bytes_lengths + msg
+
+def check_for_quit(command):
+     return command[0] == '/' and command[1] == 'q'
 
 def main(argv):
 
@@ -91,12 +109,9 @@ def main(argv):
 
     s = socket.socket()
     s.connect((host, port))
-    hello = create_hello_string(name)
+    hello_msg = create_hello_string(name)
 
-    length_hello = len(hello)
-    length_bytes = length_hello.to_bytes(2, byteorder="big")
-    hello_with_length = length_bytes + hello
-    s.send(hello_with_length)
+    s.send(create_message(hello_msg))
 
     t1 = threading.Thread(target=runner_1,
                           daemon=True,
@@ -108,13 +123,10 @@ def main(argv):
             command = read_command(f"{nick}> ")
             command_bytes = create_message_string(command)
 
-            if command[0] == '/' and command[1] == 'q':
+            if check_for_quit(command):
                 sys.exit(0)
             
-            command_len = len(command_bytes)
-            byte_len = command_len.to_bytes(2, byteorder="big")
-            command_with_length = byte_len + command_bytes
-            s.send(command_with_length)
+            s.send(create_message(command_bytes))
         except:
             break
 
