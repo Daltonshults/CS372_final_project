@@ -134,8 +134,11 @@ def send_packets(sock, read_set, list_s, packet_with_length):
         if sock != list_s:
             sock.send(packet_with_length)
 
-def buffer_contain_length(buffer, packet_len):
+def packet_len_greater_equal_buffer(buffer, packet_len):
     return packet_len <= len(buffer)
+
+def buffer_contains_length(buffer):
+    return len(buffer) > 2
 
 def while_select(read_set, list_s):
     '''
@@ -187,13 +190,13 @@ def while_select(read_set, list_s):
 
                 buffers[s] += data
 
-
-                if (len(buffers[s]) > 2):
+                # if (len(buffers[s]) > 2):
+                if buffer_contains_length(buffers[s]):
 
                     packet_len = int.from_bytes(buffers[s][:2], byteorder="big") + 2
 
 
-                    if buffer_contain_length(buffers[s], packet_len):
+                    if packet_len_greater_equal_buffer(buffers[s], packet_len):
                         packet_data = buffers[s][2:packet_len]
 
                         buffers[s]  =  b''
