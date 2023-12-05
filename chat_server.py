@@ -27,55 +27,53 @@ def create_read_set(list_s):
 
     return read_set
 
-def print_socket_results(ready_to_be_read, list_s, read_set):
-    '''
-    Prints the results of the socket depending on the socket type.
-    The listening socket will add more connections to the read_set,
-    and non-listening sockets will print the messages that they
-    recieve.
-    '''
-    conn = None
-    for s in ready_to_be_read:
+# def print_socket_results(ready_to_be_read, list_s, read_set, buffers, names):
+#     '''
+#     Prints the results of the socket depending on the socket type.
+#     The listening socket will add more connections to the read_set,
+#     and non-listening sockets will print the messages that they
+#     recieve.
+#     '''
+#     for s in ready_to_be_read:
         
-        # If the current connection is a listening socket
-        if s == list_s:
-            conn, addr = s.accept()
+#         # If the current connection is a listening socket
+#         if s == list_s:
+#             conn, addr = s.accept()
+#             buffers[conn] = b''
+#             read_set.add(conn)
+#             host, port = conn.getpeername()
+
+#             print("({}, {}): connected".format(host, port))
+#             # SEND CONNECTION TO CLIENTS
                 
-            read_set.add(conn)
-            host, port = conn.getpeername()
+#         else:
 
-            print("({}, {}): connected".format(host, port))
-            # SEND CONNECTION TO CLIENTS
-                
-        else:
+#             data = s.recv(4096)
 
-            data = s.recv(4096)
-
-            # If the data is recieved without length the connection has been closed
-            if len(data) == 0:
-                host, port = s.getpeername()
+#             # If the data is recieved without length the connection has been closed
+#             if len(data) == 0:
+#                 host, port = s.getpeername()
                     
-                print("({}, {}): disconnected".format(host, port))
+#                 print("({}, {}): disconnected".format(host, port))
                 
-                # Remove closed connections from read_set
-                read_set.remove(s)
+#                 # Remove closed connections from read_set
+#                 read_set.remove(s)
+
+#                 # SEND END OF CONNECTION TO CLIENTS
                     
-            else:
-                # The message is from a non-closed connection. Print it. 
-                host, port = s.getpeername()
-                msg_len = len(data)
-                print("({}, {}) {} bytes: {}".format(host, port, msg_len, data))
-                for sock in read_set:
-                    if sock != list_s:
-                        print("DATA")
-                        print(data.decode())
-                        print("END DATA")
-                        print(type(data))
-                        print(len(data))
-                        length = len(data) + 2
-                        length_bytes = length.to_bytes(2, byteorder="big")
-                        packet_with_length = length_bytes + data
-                        sock.send(packet_with_length)
+#             else:
+#                 # The message is from a non-closed connection. Print it. 
+#                 host, port = s.getpeername()
+#                 msg_len = len(data)
+#                 print("({}, {}) {} bytes: {}".format(host, port, msg_len, data))
+#                 for sock in read_set:
+
+#                     if sock != list_s:
+
+#                         length = len(data) + 2
+#                         length_bytes = length.to_bytes(2, byteorder="big")
+#                         packet_with_length = length_bytes + data
+#                         sock.send(packet_with_length)
 
 
 def while_select(read_set, list_s):
@@ -83,10 +81,69 @@ def while_select(read_set, list_s):
     Looping through and selecting connections that are ready,
     and passes them to the print socket results.
     '''
+    names = dict()
+    buffers = dict()
+    packet_data = b''
     while True:
         ready_to_be_read, _, _ = select.select(read_set, {}, {})        
         
-        print_socket_results(ready_to_be_read, list_s, read_set)
+        for s in ready_to_be_read:
+            
+            # If the current connection is a listening socket
+            if s == list_s:
+                conn, addr = s.accept()
+                buffers[conn] = b''
+                read_set.add(conn)
+                host, port = conn.getpeername()
+
+                print("({}, {}): connected".format(host, port))
+                # SEND CONNECTION TO CLIENTS
+                    
+            else:
+
+                data = s.recv(4096)
+
+                # If the data is recieved without length the connection has been closed
+                if len(data) == 0:
+                    host, port = s.getpeername()
+                        
+                    print("({}, {}): disconnected".format(host, port))
+                    
+                    # Remove closed connections from read_set
+                    read_set.remove(s)
+
+                    # SEND END OF CONNECTION TO CLIENTS
+                buffers[s] += data
+
+                print(f'length of buffer s {len(buffers[s])}')
+
+                if (len(buffers[s]) > 2):
+                    # The message is from a non-closed connection. Print it. 
+                    host, port = s.getpeername()
+                    msg_len = len(buffers[s])
+                    print(f"BUFFERS {buffers[s]}")
+                    
+                    #print("({}, {}) {} bytes: {}".format(host, port, msg_len, data))
+
+                    packet_len = int.from_bytes(buffers[s][:2], byteorder="big") + 2
+
+                    print(f"packet len {packet_len}")
+                    if packet_len <= len(buffers[s]):
+                        packet_data = buffers[s][2:packet_len]
+                        print("RESET BUFFER")
+                        #buffers[s]  =  b''
+
+                        print("PACKET DATA :" + str(packet_data))
+                    for sock in read_set:
+
+                        if sock != list_s:
+                            
+                            length = len(packet_data)
+                            length_bytes = length.to_bytes(2, byteorder="big")
+                            packet_with_length = length_bytes + packet_data
+                            print(f"SEND THE STUPID FUCKING SHIT: {packet_with_length}")
+                            sock.send(packet_with_length)
+                            buffers[s] = b''
 
 def run_server(port):
 
