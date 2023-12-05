@@ -21,17 +21,17 @@ def runner_1(socket):
             print_message("This is the packet length " + str(packet_len))
             if packet_len <= len(packet_buffer):
 
-                packet_data = packet_buffer[:packet_len]
+                packet_data = packet_buffer[2:packet_len]
                 packet_buffer = packet_buffer[packet_len: ]
 
 
                 json_str = packet_data.decode()
                 print_message("THIS IS THE JSON: " + json_str)
                 print_message("THIS IS THE PACKET DATA " + str(packet_data))
-                # json_packet = json.loads(json_str)
+                json_packet = json.loads(json_str)
 
-                # print_message("JSON PACKET: " + str(json_packet))
-                # print_message(json_packet["type"])
+                print_message("JSON PACKET: " + str(json_packet))
+                print_message(json_packet["type"])
         
         data = socket.recv(4096)
 
