@@ -3,8 +3,10 @@ import sys
 import json
 import threading
 from chatuicurses import init_windows, read_command, print_message, end_windows
+
 packet_buffer = b''
 nick = ""
+
 def select_response_type(json_packet):
     if json_packet["type"] == "chat" and json_packet["nick"] != nick:
                     print_message(f"{json_packet['nick']}: {json_packet['message']}")
@@ -90,7 +92,7 @@ def create_message(msg):
     return bytes_lengths + msg
 
 def check_for_quit(command):
-     return command[0] == '/' and command[1] == 'q'
+     return command[0] == '/' and command[1] == 'q' and len(command) == 2
 
 def main(argv):
 
